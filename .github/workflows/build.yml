@@ -88,7 +88,7 @@ jobs:
           launcher.py
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: defect-detection-${{ matrix.platform }}
         path: dist/${{ matrix.artifact_name }}
@@ -103,7 +103,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Download all artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         path: artifacts
 
