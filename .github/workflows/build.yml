@@ -47,17 +47,8 @@ jobs:
 
     - name: Build with PyInstaller (Windows)
       if: matrix.os == 'windows-latest'
-      run: |
-        pyinstaller --onefile --name "工业零件表面缺陷检测" ^
-          --add-data "app.py;." ^
-          --add-data "best_model.pth;." ^
-          --hidden-import streamlit ^
-          --hidden-import streamlit.cli ^
-          --hidden-import streamlit.runtime ^
-          --hidden-import PIL ^
-          --hidden-import torch ^
-          --hidden-import torchvision ^
-          launcher.py
+      shell: pwsh
+      run: pyinstaller --onefile --name "工业零件表面缺陷检测" --add-data "app.py;." --add-data "best_model.pth;." --hidden-import streamlit --hidden-import streamlit.cli --hidden-import streamlit.runtime --hidden-import PIL --hidden-import torch --hidden-import torchvision launcher.py
 
     - name: Build with PyInstaller (macOS)
       if: matrix.os == 'macos-latest'
