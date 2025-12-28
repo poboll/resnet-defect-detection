@@ -20,14 +20,17 @@ jobs:
             platform: windows
             ext: .exe
             artifact_name: 工业零件表面缺陷检测.exe
+            path_sep: ';'
           - os: macos-latest
             platform: macos
             ext: ''
             artifact_name: 工业零件表面缺陷检测
+            path_sep: ':'
           - os: ubuntu-latest
             platform: linux
             ext: ''
             artifact_name: 工业零件表面缺陷检测
+            path_sep: ':'
 
     runs-on: ${{ matrix.os }}
 
@@ -36,12 +39,9 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.9'
-
-    - name: Increase Python recursion limit
-      run: python -c "import sys; sys.setrecursionlimit(5000); print('Recursion limit set to 5000')"
+        python-version: '3.10'
 
     - name: Install dependencies
       run: |
@@ -49,9 +49,113 @@ jobs:
         pip install pyinstaller
         pip install -r requirements.txt
 
-    - name: Build with PyInstaller
+    - name: Create PyInstaller spec file
+      shell: python
       run: |
-        pyinstaller launcher.py --onefile --name "工业零件表面缺陷检测" --add-data "app.py:." --add-data "best_model.pth:." --hidden-import streamlit --hidden-import streamlit.cli --hidden-import streamlit.runtime --hidden-import PIL --hidden-import torch --hidden-import torchvision --clean
+        import sys
+        sys.setrecursionlimit(5000)
+        
+        spec_content = '''# -*- mode: python ; coding: utf-8 -*-
+        import sys
+        sys.setrecursionlimit(5000)
+        
+        block_cipher = None
+        
+        a = Analysis(
+            ['launcher.py'],
+            pathex=[],
+            binaries=[],
+            datas=[('app.py', '.'), ('best_model.pth', '.')],
+            hiddenimports=[
+                'streamlit',
+                'streamlit.cli',
+                'streamlit.runtime',
+                'streamlit.runtime.scriptrunner',
+                'streamlit.web',
+                'streamlit.web.cli',
+                'PIL',
+                'PIL.Image',
+                'torch',
+                'torchvision',
+                'torchvision.models',
+                'numpy',
+                'pandas',
+                'sklearn',
+                'sklearn.utils',
+                'sklearn.utils._cython_blas',
+                'sklearn.neighbors._typedefs',
+                'sklearn.neighbors._quad_tree',
+                'sklearn.tree._utils',
+            ],
+            hookspath=[],
+            hooksconfig={},
+            runtime_hooks=[],
+            excludes=[
+                'matplotlib',
+                'tkinter',
+                'PyQt5',
+                'PyQt6',
+                'PySide2',
+                'PySide6',
+                'IPython',
+                'jupyter',
+                'notebook',
+                'pytest',
+                'sphinx',
+            ],
+            win_no_prefer_redirects=False,
+            win_private_assemblies=False,
+            cipher=block_cipher,
+            noarchive=False,
+        )
+        
+        pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+        
+        exe = EXE(
+            pyz,
+            a.scripts,
+            a.binaries,
+            a.zipfiles,
+            a.datas,
+            [],
+            name='工业零件表面缺陷检测',
+            debug=False,
+            bootloader_ignore_signals=False,
+            strip=False,
+            upx=True,
+            upx_exclude=[],
+            runtime_tmpdir=None,
+            console=True,
+            disable_windowed_traceback=False,
+            argv_emulation=False,
+            target_arch=None,
+            codesign_identity=None,
+            entitlements_file=None,
+        )
+        '''
+        
+        with open('defect_detection.spec', 'w', encoding='utf-8') as f:
+            f.write(spec_content)
+        
+        print("Spec file created successfully")
+
+    - name: Build with PyInstaller (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: cmd
+      run: |
+        set PYTHONRECURSIONLIMIT=5000
+        python -c "import sys; sys.setrecursionlimit(5000); import PyInstaller.__main__; PyInstaller.__main__.run(['defect_detection.spec', '--clean', '--noconfirm'])"
+
+    - name: Build with PyInstaller (Unix)
+      if: matrix.os != 'windows-latest'
+      shell: bash
+      run: |
+        export PYTHONRECURSIONLIMIT=5000
+        python -c "import sys; sys.setrecursionlimit(5000); import PyInstaller.__main__; PyInstaller.__main__.run(['defect_detection.spec', '--clean', '--noconfirm'])"
+
+    - name: List build output
+      run: |
+        ls -la dist/ || dir dist/
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
