@@ -7,30 +7,24 @@ on:
       - 'v*'
   pull_request:
     branches: [ main, master ]
-  workflow_dispatch:  # 允许手动触发
+  workflow_dispatch:
 
 jobs:
   build:
     strategy:
-      fail-fast: false  # 即使一个平台失败，其他平台继续构建
+      fail-fast: false
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
         include:
           - os: windows-latest
             platform: windows
-            ext: .exe
-            artifact_name: 工业零件表面缺陷检测.exe
-            path_sep: ';'
+            artifact_name: defect-detection-windows
           - os: macos-latest
             platform: macos
-            ext: ''
-            artifact_name: 工业零件表面缺陷检测
-            path_sep: ':'
+            artifact_name: defect-detection-macos
           - os: ubuntu-latest
             platform: linux
-            ext: ''
-            artifact_name: 工业零件表面缺陷检测
-            path_sep: ':'
+            artifact_name: defect-detection-linux
 
     runs-on: ${{ matrix.os }}
 
@@ -43,126 +37,119 @@ jobs:
       with:
         python-version: '3.10'
 
+    - name: Free disk space (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /usr/local/share/boost
+        df -h
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pyinstaller
-        pip install -r requirements.txt
+        pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+        pip install streamlit pillow numpy pandas scikit-learn tqdm
 
-    - name: Create PyInstaller spec file
+    - name: Create build script
       shell: python
       run: |
-        import sys
-        sys.setrecursionlimit(5000)
-        
-        spec_content = '''# -*- mode: python ; coding: utf-8 -*-
-        import sys
-        sys.setrecursionlimit(5000)
-        
-        block_cipher = None
-        
-        a = Analysis(
-            ['launcher.py'],
-            pathex=[],
-            binaries=[],
-            datas=[('app.py', '.'), ('best_model.pth', '.')],
-            hiddenimports=[
-                'streamlit',
-                'streamlit.cli',
-                'streamlit.runtime',
-                'streamlit.runtime.scriptrunner',
-                'streamlit.web',
-                'streamlit.web.cli',
-                'PIL',
-                'PIL.Image',
-                'torch',
-                'torchvision',
-                'torchvision.models',
-                'numpy',
-                'pandas',
-                'sklearn',
-                'sklearn.utils',
-                'sklearn.utils._cython_blas',
-                'sklearn.neighbors._typedefs',
-                'sklearn.neighbors._quad_tree',
-                'sklearn.tree._utils',
-            ],
-            hookspath=[],
-            hooksconfig={},
-            runtime_hooks=[],
-            excludes=[
-                'matplotlib',
-                'tkinter',
-                'PyQt5',
-                'PyQt6',
-                'PySide2',
-                'PySide6',
-                'IPython',
-                'jupyter',
-                'notebook',
-                'pytest',
-                'sphinx',
-            ],
-            win_no_prefer_redirects=False,
-            win_private_assemblies=False,
-            cipher=block_cipher,
-            noarchive=False,
-        )
-        
-        pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
-        
-        exe = EXE(
-            pyz,
-            a.scripts,
-            a.binaries,
-            a.zipfiles,
-            a.datas,
-            [],
-            name='工业零件表面缺陷检测',
-            debug=False,
-            bootloader_ignore_signals=False,
-            strip=False,
-            upx=True,
-            upx_exclude=[],
-            runtime_tmpdir=None,
-            console=True,
-            disable_windowed_traceback=False,
-            argv_emulation=False,
-            target_arch=None,
-            codesign_identity=None,
-            entitlements_file=None,
-        )
-        '''
-        
-        with open('defect_detection.spec', 'w', encoding='utf-8') as f:
-            f.write(spec_content)
-        
-        print("Spec file created successfully")
+        script = '''
+import sys
+import os
+
+# 增加递归限制
+sys.setrecursionlimit(10000)
+
+# 设置线程栈大小 (Windows)
+if sys.platform == 'win32':
+    import threading
+    threading.stack_size(0x2000000)  # 32MB
+
+import PyInstaller.__main__
+
+args = [
+    'launcher.py',
+    '--name=DefectDetection',
+    '--onedir',
+    '--console',
+    '--clean',
+    '--noconfirm',
+    '--add-data=app.py{sep}.',
+    '--add-data=best_model.pth{sep}.',
+    '--hidden-import=streamlit',
+    '--hidden-import=streamlit.runtime.scriptrunner',
+    '--hidden-import=PIL',
+    '--hidden-import=torch',
+    '--hidden-import=torchvision',
+    '--hidden-import=pandas',
+    '--hidden-import=numpy',
+    '--hidden-import=sklearn',
+    '--exclude-module=matplotlib',
+    '--exclude-module=tkinter',
+    '--exclude-module=PyQt5',
+    '--exclude-module=PyQt6',
+    '--exclude-module=PySide2',
+    '--exclude-module=PySide6',
+    '--exclude-module=IPython',
+    '--exclude-module=jupyter',
+    '--exclude-module=notebook',
+    '--exclude-module=pytest',
+    '--exclude-module=sphinx',
+    '--exclude-module=tensorboard',
+    '--exclude-module=torch.utils.tensorboard',
+    '--collect-all=streamlit',
+]
+
+sep = ';' if sys.platform == 'win32' else ':'
+args = [arg.format(sep=sep) for arg in args]
+
+PyInstaller.__main__.run(args)
+'''
+        with open('build_exe.py', 'w') as f:
+            f.write(script)
 
     - name: Build with PyInstaller (Windows)
       if: matrix.os == 'windows-latest'
       shell: cmd
       run: |
-        set PYTHONRECURSIONLIMIT=5000
-        python -c "import sys; sys.setrecursionlimit(5000); import PyInstaller.__main__; PyInstaller.__main__.run(['defect_detection.spec', '--clean', '--noconfirm'])"
+        python build_exe.py
 
     - name: Build with PyInstaller (Unix)
       if: matrix.os != 'windows-latest'
+      run: |
+        python build_exe.py
+
+    - name: Rename output folder
       shell: bash
       run: |
-        export PYTHONRECURSIONLIMIT=5000
-        python -c "import sys; sys.setrecursionlimit(5000); import PyInstaller.__main__; PyInstaller.__main__.run(['defect_detection.spec', '--clean', '--noconfirm'])"
+        mv dist/DefectDetection dist/工业零件表面缺陷检测
 
-    - name: List build output
+    - name: Create archive (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: pwsh
       run: |
-        ls -la dist/ || dir dist/
+        Compress-Archive -Path "dist/工业零件表面缺陷检测" -DestinationPath "dist/${{ matrix.artifact_name }}.zip"
 
-    - name: Upload artifact
+    - name: Create archive (Unix)
+      if: matrix.os != 'windows-latest'
+      run: |
+        cd dist && tar -czvf ${{ matrix.artifact_name }}.tar.gz 工业零件表面缺陷检测
+
+    - name: Upload artifact (Windows)
+      if: matrix.os == 'windows-latest'
       uses: actions/upload-artifact@v4
       with:
-        name: defect-detection-${{ matrix.platform }}
-        path: dist/${{ matrix.artifact_name }}
-        if-no-files-found: error
+        name: ${{ matrix.artifact_name }}
+        path: dist/${{ matrix.artifact_name }}.zip
+
+    - name: Upload artifact (Unix)
+      if: matrix.os != 'windows-latest'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.artifact_name }}
+        path: dist/${{ matrix.artifact_name }}.tar.gz
 
   release:
     needs: build
@@ -170,9 +157,6 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
     - name: Download all artifacts
       uses: actions/download-artifact@v4
       with:
@@ -182,9 +166,9 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          artifacts/defect-detection-windows/工业零件表面缺陷检测.exe
-          artifacts/defect-detection-macos/工业零件表面缺陷检测
-          artifacts/defect-detection-linux/工业零件表面缺陷检测
+          artifacts/defect-detection-windows/defect-detection-windows.zip
+          artifacts/defect-detection-macos/defect-detection-macos.tar.gz
+          artifacts/defect-detection-linux/defect-detection-linux.tar.gz
         draft: false
         prerelease: false
         generate_release_notes: true
