@@ -73,12 +73,16 @@ jobs:
             '--noconfirm',
             '--add-data=app.py;.',
             '--add-data=best_model.pth;.',
+            '--collect-all=streamlit',
+            '--collect-all=altair',
             '--hidden-import=streamlit',
+            '--hidden-import=streamlit.runtime.scriptrunner.magic_funcs',
             '--hidden-import=PIL',
             '--hidden-import=torch',
             '--hidden-import=torchvision',
             '--hidden-import=pandas',
             '--hidden-import=numpy',
+            '--hidden-import=pyarrow',
             '--exclude-module=matplotlib',
             '--exclude-module=tkinter',
             '--exclude-module=PyQt5',
@@ -86,8 +90,6 @@ jobs:
             '--exclude-module=IPython',
             '--exclude-module=jupyter',
             '--exclude-module=tensorboard',
-            '--exclude-module=scipy',
-            '--exclude-module=sympy',
         ])
         "@
 
@@ -107,12 +109,16 @@ jobs:
             '--noconfirm',
             '--add-data=app.py:.',
             '--add-data=best_model.pth:.',
+            '--collect-all=streamlit',
+            '--collect-all=altair',
             '--hidden-import=streamlit',
+            '--hidden-import=streamlit.runtime.scriptrunner.magic_funcs',
             '--hidden-import=PIL',
             '--hidden-import=torch',
             '--hidden-import=torchvision',
             '--hidden-import=pandas',
             '--hidden-import=numpy',
+            '--hidden-import=pyarrow',
             '--exclude-module=matplotlib',
             '--exclude-module=tkinter',
             '--exclude-module=PyQt5',
@@ -120,7 +126,6 @@ jobs:
             '--exclude-module=IPython',
             '--exclude-module=jupyter',
             '--exclude-module=tensorboard',
-            '--collect-all=streamlit',
         ])
         "
 
