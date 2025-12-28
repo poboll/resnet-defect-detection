@@ -1,0 +1,121 @@
+name: Build Multi-Platform Executables
+
+on:
+  push:
+    branches: [ main, master ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            platform: windows
+            ext: .exe
+            artifact_name: 工业零件表面缺陷检测.exe
+          - os: macos-latest
+            platform: macos
+            ext: ''
+            artifact_name: 工业零件表面缺陷检测
+          - os: ubuntu-latest
+            platform: linux
+            ext: ''
+            artifact_name: 工业零件表面缺陷检测
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+        pip install -r requirements.txt
+
+    - name: Build with PyInstaller (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        pyinstaller --onefile --name "工业零件表面缺陷检测" ^
+          --add-data "app.py;." ^
+          --add-data "best_model.pth;." ^
+          --hidden-import streamlit ^
+          --hidden-import streamlit.cli ^
+          --hidden-import streamlit.runtime ^
+          --hidden-import PIL ^
+          --hidden-import torch ^
+          --hidden-import torchvision ^
+          launcher.py
+
+    - name: Build with PyInstaller (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        pyinstaller --onefile --name "工业零件表面缺陷检测" \
+          --add-data "app.py:." \
+          --add-data "best_model.pth:." \
+          --hidden-import streamlit \
+          --hidden-import streamlit.cli \
+          --hidden-import streamlit.runtime \
+          --hidden-import PIL \
+          --hidden-import torch \
+          --hidden-import torchvision \
+          launcher.py
+
+    - name: Build with PyInstaller (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        pyinstaller --onefile --name "工业零件表面缺陷检测" \
+          --add-data "app.py:." \
+          --add-data "best_model.pth:." \
+          --hidden-import streamlit \
+          --hidden-import streamlit.cli \
+          --hidden-import streamlit.runtime \
+          --hidden-import PIL \
+          --hidden-import torch \
+          --hidden-import torchvision \
+          launcher.py
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: defect-detection-${{ matrix.platform }}
+        path: dist/${{ matrix.artifact_name }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: artifacts
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          artifacts/defect-detection-windows/工业零件表面缺陷检测.exe
+          artifacts/defect-detection-macos/工业零件表面缺陷检测
+          artifacts/defect-detection-linux/工业零件表面缺陷检测
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
