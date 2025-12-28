@@ -48,65 +48,78 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pyinstaller
+        pip install pyinstaller==5.13.2
         pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
         pip install streamlit pillow numpy pandas scikit-learn tqdm
 
-    - name: Create build script
-      shell: bash
+    - name: Build (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: pwsh
       run: |
-        cat > build_exe.py << 'PYTHON_SCRIPT'
+        $env:PYTHONOPTIMIZE = "1"
+        python -c @"
         import sys
-        import os
-
         sys.setrecursionlimit(10000)
-
-        if sys.platform == 'win32':
-            import threading
-            threading.stack_size(0x2000000)
-
         import PyInstaller.__main__
-
-        sep = ';' if sys.platform == 'win32' else ':'
-
-        args = [
+        PyInstaller.__main__.run([
             'launcher.py',
             '--name=DefectDetection',
             '--onedir',
             '--console',
             '--clean',
             '--noconfirm',
-            f'--add-data=app.py{sep}.',
-            f'--add-data=best_model.pth{sep}.',
+            '--add-data=app.py;.',
+            '--add-data=best_model.pth;.',
             '--hidden-import=streamlit',
-            '--hidden-import=streamlit.runtime.scriptrunner',
             '--hidden-import=PIL',
             '--hidden-import=torch',
             '--hidden-import=torchvision',
             '--hidden-import=pandas',
             '--hidden-import=numpy',
-            '--hidden-import=sklearn',
             '--exclude-module=matplotlib',
             '--exclude-module=tkinter',
             '--exclude-module=PyQt5',
             '--exclude-module=PyQt6',
-            '--exclude-module=PySide2',
-            '--exclude-module=PySide6',
             '--exclude-module=IPython',
             '--exclude-module=jupyter',
-            '--exclude-module=notebook',
-            '--exclude-module=pytest',
-            '--exclude-module=sphinx',
             '--exclude-module=tensorboard',
-            '--exclude-module=torch.utils.tensorboard',
+            '--exclude-module=scipy',
+            '--exclude-module=sympy',
+        ])
+        "@
+
+    - name: Build (Unix)
+      if: matrix.os != 'windows-latest'
+      run: |
+        python -c "
+        import sys
+        sys.setrecursionlimit(10000)
+        import PyInstaller.__main__
+        PyInstaller.__main__.run([
+            'launcher.py',
+            '--name=DefectDetection',
+            '--onedir',
+            '--console',
+            '--clean',
+            '--noconfirm',
+            '--add-data=app.py:.',
+            '--add-data=best_model.pth:.',
+            '--hidden-import=streamlit',
+            '--hidden-import=PIL',
+            '--hidden-import=torch',
+            '--hidden-import=torchvision',
+            '--hidden-import=pandas',
+            '--hidden-import=numpy',
+            '--exclude-module=matplotlib',
+            '--exclude-module=tkinter',
+            '--exclude-module=PyQt5',
+            '--exclude-module=PyQt6',
+            '--exclude-module=IPython',
+            '--exclude-module=jupyter',
+            '--exclude-module=tensorboard',
             '--collect-all=streamlit',
-        ]
-
-        PyInstaller.__main__.run(args)
-        PYTHON_SCRIPT
-
-    - name: Build with PyInstaller
-      run: python build_exe.py
+        ])
+        "
 
     - name: Rename output folder
       shell: bash
