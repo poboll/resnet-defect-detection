@@ -593,7 +593,7 @@ PPT 大纲位于 `plans/ppt_outline.md`，包含 29 页详细内容：
 
 <div align="center">
 
-**Made with ❤️ by [Your Name]**
+**Made with ❤️ by poboll**
 
 [⬆ Back to Top](#readme)
 

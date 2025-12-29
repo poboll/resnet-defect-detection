@@ -52,6 +52,12 @@ training_curve.png
 # Data (optional - uncomment if you don't want to upload data)
 # data/
 
+# Documents and presentations (optional - uncomment if you don't want to upload)
+# *.doc
+# *.docx
+# *.ppt
+# *.pptx
+
 # Temporary files
 *.tmp
 *.bak
