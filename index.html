@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工业零件表面缺陷分类系统 | ResNet18 深度学习</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0066FF;
+            --primary-hover: #0052CC;
+            --primary-light: #E6F0FF;
+            --secondary: #6366F1;
+            --accent: #0EA5E9;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --dark: #0F172A;
+            --gray-900: #111827;
+            --gray-800: #1F2937;
+            --gray-700: #374151;
+            --gray-600: #4B5563;
+            --gray-500: #6B7280;
+            --gray-400: #9CA3AF;
+            --gray-300: #D1D5DB;
+            --gray-200: #E5E7EB;
+            --gray-100: #F3F4F6;
+            --gray-50: #F9FAFB;
+            --white: #FFFFFF;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            line-height: 1.6;
+            color: var(--gray-900);
+            background: var(--white);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 16px;
+            }
+        }
+
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--gray-200);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .navbar.scrolled {
+            box-shadow: var(--shadow-md);
+        }
+
+        .navbar-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--gray-900);
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .navbar-brand i {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        .navbar-nav {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .navbar-nav a {
+            text-decoration: none;
+            color: var(--gray-600);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color 0.2s ease;
+        }
+
+        .navbar-nav a:hover {
+            color: var(--primary);
+        }
+
+        .navbar-cta {
+            display: none;
+        }
+
+        @media (min-width: 1024px) {
+            .navbar-cta {
+                display: block;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .navbar-nav {
+                display: none;
+            }
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 160px 0 100px;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--white) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            background: radial-gradient(circle at 70% 30%, rgba(0, 102, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            color: var(--gray-900);
+            letter-spacing: -0.02em;
+        }
+
+        .hero p {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            color: var(--gray-600);
+            margin-bottom: 40px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.75;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--gray-900);
+            border: 1px solid var(--gray-300);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+        }
+
+        /* Stats Section */
+        .stats {
+            padding: 80px 0;
+            background: var(--white);
+            margin-top: -60px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        @media (min-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .stat-card {
+            background: var(--white);
+            padding: 32px 24px;
+            border-radius: 16px;
+            border: 1px solid var(--gray-200);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-4px);
+            border-color: var(--primary);
+        }
+
+        .stat-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--primary-light);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--gray-900);
+            margin-bottom: 4px;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        /* Section Styles */
+        .section {
+            padding: 100px 0;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .section-tag {
+            display: inline-block;
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800;
+            color: var(--gray-900);
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+
+        .section-subtitle {
+            font-size: 1.125rem;
+            color: var(--gray-600);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.75;
+        }
+
+        /* Features Section */
+        .features {
+            background: var(--gray-50);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 32px;
+        }
+
+        @media (min-width: 768px) {
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .features-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .feature-card {
+            background: var(--white);
+            padding: 32px;
+            border-radius: 16px;
+            border: 1px solid var(--gray-200);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-4px);
+            border-color: var(--primary);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--primary-light);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 1.25rem;
+            color: var(--primary);
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--gray-900);
+        }
+
+        .feature-card p {
+            color: var(--gray-600);
+            line-height: 1.75;
+            font-size: 0.95rem;
+        }
+
+        /* Defect Types Section */
+        .defect-types {
+            background: var(--white);
+        }
+
+        .defect-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 32px;
+        }
+
+        @media (min-width: 768px) {
+            .defect-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .defect-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .defect-card {
+            background: var(--white);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--gray-200);
+            transition: all 0.3s ease;
+        }
+
+        .defect-card:hover {
+            box-shadow: var(--shadow-xl);
+            transform: translateY(-4px);
+        }
+
+        .defect-image {
+            position: relative;
+            height: 240px;
+            overflow: hidden;
+            background: var(--gray-100);
+        }
+
+        .defect-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .defect-card:hover .defect-image img {
+            transform: scale(1.05);
+        }
+
+        .defect-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .defect-content {
+            padding: 24px;
+        }
+
+        .defect-content h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--gray-900);
+        }
+
+        .defect-content .chinese {
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .defect-content p {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* Training Results Section */
+        .training-results {
+            background: var(--gray-50);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 40px;
+        }
+
+        @media (min-width: 1024px) {
+            .results-grid {
+                grid-template-columns: 1.2fr 0.8fr;
+            }
+        }
+
+        .chart-card,
+        .table-card {
+            background: var(--white);
+            padding: 32px;
+            border-radius: 16px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .card-header h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .card-header i {
+            font-size: 1.25rem;
+            color: var(--primary);
+        }
+
+        .chart-card img {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: var(--gray-50);
+            color: var(--gray-700);
+            font-weight: 600;
+            text-align: left;
+            padding: 12px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: var(--gray-50);
+        }
+
+        .performance-excellent {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .performance-good {
+            color: var(--warning);
+            font-weight: 600;
+        }
+
+        /* Tech Stack Section */
+        .tech-stack {
+            background: var(--dark);
+            color: var(--white);
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        @media (min-width: 768px) {
+            .tech-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .tech-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .tech-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+            transform: translateY(-4px);
+        }
+
+        .tech-item i {
+            font-size: 2rem;
+            margin-bottom: 12px;
+            color: var(--primary);
+        }
+
+        .tech-item h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .tech-item span {
+            font-size: 0.8rem;
+            color: var(--gray-400);
+        }
+
+        .tech-stack .section-tag {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+        }
+
+        .tech-stack .section-title {
+            color: var(--white);
+        }
+
+        .tech-stack .section-subtitle {
+            color: var(--gray-400);
+        }
+
+        /* Demo Section */
+        .demo {
+            background: var(--white);
+        }
+
+        .demo-card {
+            background: var(--white);
+            padding: 48px;
+            border-radius: 16px;
+            border: 1px solid var(--gray-200);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .demo-card h3 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--gray-900);
+            text-align: center;
+        }
+
+        .demo-card p {
+            color: var(--gray-600);
+            text-align: center;
+            margin-bottom: 32px;
+            font-size: 1.1rem;
+        }
+
+        .demo-features {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        @media (min-width: 640px) {
+            .demo-features {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .demo-feature {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: var(--gray-50);
+            border-radius: 8px;
+        }
+
+        .demo-feature i {
+            color: var(--success);
+            font-size: 1.1rem;
+        }
+
+        .demo-feature span {
+            color: var(--gray-700);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .demo-cta {
+            text-align: center;
+        }
+
+        /* Documentation Section */
+        .documentation {
+            background: var(--gray-50);
+        }
+
+        .docs-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        @media (min-width: 768px) {
+            .docs-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .docs-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .doc-card {
+            background: var(--white);
+            padding: 32px;
+            border-radius: 16px;
+            border: 1px solid var(--gray-200);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .doc-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-4px);
+            border-color: var(--primary);
+        }
+
+        .doc-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--primary-light);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 1.25rem;
+            color: var(--primary);
+        }
+
+        .doc-card h3 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--gray-900);
+        }
+
+        .doc-card p {
+            color: var(--gray-600);
+            line-height: 1.6;
+            margin-bottom: 20px;
+            flex-grow: 1;
+            font-size: 0.9rem;
+        }
+
+        .doc-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.95rem;
+            transition: gap 0.2s ease;
+        }
+
+        .doc-link:hover {
+            gap: 10px;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--dark);
+            color: var(--gray-400);
+            padding: 80px 0 32px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 48px;
+            margin-bottom: 64px;
+        }
+
+        @media (min-width: 768px) {
+            .footer-grid {
+                grid-template-columns: 2fr 1fr 1fr 1fr;
+            }
+        }
+
+        .footer-brand h4 {
+            color: var(--white);
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer-brand h4 i {
+            color: var(--primary);
+        }
+
+        .footer-brand p {
+            line-height: 1.75;
+            font-size: 0.95rem;
+        }
+
+        .footer-section h5 {
+            color: var(--white);
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+
+        .footer-links a {
+            color: var(--gray-400);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--white);
+        }
+
+        .footer-bottom {
+            padding-top: 32px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        @media (min-width: 768px) {
+            .footer-bottom {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+        }
+
+        .footer-copyright {
+            font-size: 0.9rem;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 16px;
+        }
+
+        .social-links a {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 1.1rem;
+            transition: all 0.2s ease;
+        }
+
+        .social-links a:hover {
+            background: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        /* Scroll to Top */
+        .scroll-top {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 48px;
+            height: 48px;
+            background: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .scroll-top:hover {
+            background: var(--primary-hover);
+            transform: translateY(-4px);
+        }
+
+        .scroll-top.visible {
+            display: flex;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeInUp 0.6s ease-out;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="container">
+            <div class="navbar-inner">
+                <a href="#" class="navbar-brand">
+                    <i class="fas fa-microscope"></i>
+                    DefectDetect
+                </a>
+                <ul class="navbar-nav">
+                    <li><a href="#features">特性</a></li>
+                    <li><a href="#defects">缺陷类型</a></li>
+                    <li><a href="#results">实验结果</a></li>
+                    <li><a href="#demo">在线演示</a></li>
+                    <li><a href="#docs">文档</a></li>
+                </ul>
+                <div class="navbar-cta">
+                    <a href="https://github.com/poboll/resnet-defect-detection" class="btn btn-primary">
+                        <i class="fab fa-github"></i>
+                        GitHub
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <i class="fas fa-rocket"></i>
+                    基于 ResNet18 深度学习
+                </div>
+                <h1>工业零件表面缺陷<br>智能检测系统</h1>
+                <p>采用先进的深度学习技术，实现高精度、实时的工业零件表面缺陷自动分类，为智能制造提供强有力的技术支撑</p>
+                <div class="hero-actions">
+                    <a href="https://github.com/poboll/resnet-defect-detection" class="btn btn-primary">
+                        <i class="fab fa-github"></i>
+                        查看 GitHub
+                    </a>
+                    <a href="https://github.com/poboll/resnet-defect-detection/archive/refs/heads/main.zip"
+                        class="btn btn-secondary">
+                        <i class="fas fa-download"></i>
+                        下载源代码
+                    </a>
+                    <a href="#demo" class="btn btn-secondary">
+                        <i class="fas fa-play-circle"></i>
+                        在线演示
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <div class="stat-value">98.33%</div>
+                    <div class="stat-label">验证集准确率</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <div class="stat-value">6</div>
+                    <div class="stat-label">缺陷类别</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-value">~15 分钟</div>
+                    <div class="stat-label">训练时间</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <div class="stat-value">
+                        < 0.1s</div>
+                            <div class="stat-label">推理时间</div>
+                    </div>
+                </div>
+            </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="section features" id="features">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-tag">核心特性</div>
+                <h2 class="section-title">先进技术，卓越性能</h2>
+                <p class="section-subtitle">采用业界领先的深度学习技术，为工业质检提供智能化解决方案</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3>迁移学习</h3>
+                    <p>利用在 ImageNet 大规模数据集上预训练的 ResNet18 模型，在小样本情况下实现优异性能，大幅降低训练成本</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-snowflake"></i>
+                    </div>
+                    <h3>参数冻结</h3>
+                    <p>冻结前 8 层参数，仅训练自定义全连接层，有效防止过拟合，显著提高训练效率和模型稳定性</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-magic"></i>
+                    </div>
+                    <h3>数据增强</h3>
+                    <p>采用 RandomResizedCrop 和 RandomHorizontalFlip 等先进技术，显著提升模型泛化能力和鲁棒性</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>高精度检测</h3>
+                    <p>验证集准确率达到 98.33%，各类别 F1 分数均不低于 0.95，达到工业级应用标准</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <h3>Web 演示</h3>
+                    <p>基于 Streamlit 的友好 Web 界面，支持实时缺陷检测和概率可视化，操作简单直观</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                    <h3>跨平台支持</h3>
+                    <p>支持 Windows、macOS、Linux 三大平台，提供可执行文件和源代码，满足不同环境需求</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Defect Types Section -->
+    <section class="section defect-types" id="defects">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-tag">缺陷类型</div>
+                <h2 class="section-title">六类常见缺陷</h2>
+                <p class="section-subtitle">系统可精准识别 6 种常见的工业零件表面缺陷，覆盖主要质量问题</p>
+            </div>
+            <div class="defect-grid">
+                <div class="defect-card">
+                    <div class="defect-image">
+                        <img src="data/train/images/crazing/crazing_1.jpg" alt="Crazing - 裂纹" loading="lazy">
+                        <div class="defect-badge">类别 1</div>
+                    </div>
+                    <div class="defect-content">
+                        <h3>Crazing</h3>
+                        <span class="chinese">裂纹</span>
+                        <p>表面出现细小裂纹，通常由材料疲劳或应力集中引起，是金属零件常见的表面缺陷之一</p>
+                    </div>
+                </div>
+                <div class="defect-card">
+                    <div class="defect-image">
+                        <img src="data/train/images/inclusion/inclusion_1.jpg" alt="Inclusion - 夹杂" loading="lazy">
+                        <div class="defect-badge">类别 2</div>
+                    </div>
+                    <div class="defect-content">
+                        <h3>Inclusion</h3>
+                        <span class="chinese">夹杂</span>
+                        <p>表面嵌入异物，可能是生产过程中混入的杂质或原材料中的夹杂物，影响零件质量</p>
+                    </div>
+                </div>
+                <div class="defect-card">
+                    <div class="defect-image">
+                        <img src="data/train/images/patches/patches_1.jpg" alt="Patches - 斑块" loading="lazy">
+                        <div class="defect-badge">类别 3</div>
+                    </div>
+                    <div class="defect-content">
+                        <h3>Patches</h3>
+                        <span class="chinese">斑块</span>
+                        <p>表面出现斑块状缺陷，通常由涂层不均匀、化学腐蚀或表面处理不当引起</p>
+                    </div>
+                </div>
+                <div class="defect-card">
+                    <div class="defect-image">
+                        <img src="data/train/images/pitted_surface/pitted_surface_1.jpg" alt="Pitted Surface - 麻点"
+                            loading="lazy">
+                        <div class="defect-badge">类别 4</div>
+                    </div>
+                    <div class="defect-content">
+                        <h3>Pitted Surface</h3>
+                        <span class="chinese">麻点</span>
+                        <p>表面出现细小凹坑，可能是化学腐蚀、电化学腐蚀或机械损伤导致的表面缺陷</p>
+                    </div>
+                </div>
+                <div class="defect-card">
+                    <div class="defect-image">
+                        <img src="data/train/images/rolled-in_scale/rolled-in_scale_1.jpg" alt="Rolled-in Scale - 氧化皮"
+                            loading="lazy">
+                        <div class="defect-badge">类别 5</div>
+                    </div>
+                    <div class="defect-content">
+                        <h3>Rolled-in Scale</h3>
+                        <span class="chinese">氧化皮</span>
+                        <p>表面氧化形成的鳞片状物质，常见于高温加工后的金属表面，影响外观和性能</p>
+                    </div>
+                </div>
+                <div class="defect-card">
+                    <div class="defect-image">
+                        <img src="data/train/images/scratches/scratches_1.jpg" alt="Scratches - 划痕" loading="lazy">
+                        <div class="defect-badge">类别 6</div>
+                    </div>
+                    <div class="defect-content">
+                        <h3>Scratches</h3>
+                        <span class="chinese">划痕</span>
+                        <p>表面被划伤的痕迹，可能是运输、加工或装配过程中产生的机械损伤</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Training Results Section -->
+    <section class="section training-results" id="results">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-tag">实验结果</div>
+                <h2 class="section-title">优异的性能表现</h2>
+                <p class="section-subtitle">经过 15 轮训练，模型在验证集上取得优异性能，各项指标均达到工业级标准</p>
+            </div>
+            <div class="results-grid">
+                <div class="chart-card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-line"></i>
+                        <h3>训练曲线</h3>
+                    </div>
+                    <img src="training_curve.png" alt="Training Curve">
+                </div>
+                <div class="table-card">
+                    <div class="card-header">
+                        <i class="fas fa-table"></i>
+                        <h3>各类别性能指标</h3>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>缺陷类别</th>
+                                <th>精确率</th>
+                                <th>召回率</th>
+                                <th>F1 分数</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Crazing</td>
+                                <td class="performance-excellent">100%</td>
+                                <td class="performance-excellent">100%</td>
+                                <td class="performance-excellent">1.00</td>
+                            </tr>
+                            <tr>
+                                <td>Inclusion</td>
+                                <td class="performance-excellent">100%</td>
+                                <td class="performance-good">90%</td>
+                                <td class="performance-good">0.95</td>
+                            </tr>
+                            <tr>
+                                <td>Patches</td>
+                                <td class="performance-excellent">100%</td>
+                                <td class="performance-excellent">100%</td>
+                                <td class="performance-excellent">1.00</td>
+                            </tr>
+                            <tr>
+                                <td>Pitted_surface</td>
+                                <td class="performance-excellent">100%</td>
+                                <td class="performance-excellent">100%</td>
+                                <td class="performance-excellent">1.00</td>
+                            </tr>
+                            <tr>
+                                <td>Rolled-in_scale</td>
+                                <td class="performance-excellent">100%</td>
+                                <td class="performance-excellent">100%</td>
+                                <td class="performance-excellent">1.00</td>
+                            </tr>
+                            <tr>
+                                <td>Scratches</td>
+                                <td class="performance-good">91%</td>
+                                <td class="performance-excellent">100%</td>
+                                <td class="performance-good">0.95</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tech Stack Section -->
+    <section class="section tech-stack" id="tech">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-tag">技术栈</div>
+                <h2 class="section-title">业界领先的技术</h2>
+                <p class="section-subtitle">采用业界领先的深度学习框架和工具，确保系统的稳定性和可扩展性</p>
+            </div>
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <i class="fab fa-python"></i>
+                    <h4>Python</h4>
+                    <span>3.9+</span>
+                </div>
+                <div class="tech-item">
+                    <i class="fas fa-fire"></i>
+                    <h4>PyTorch</h4>
+                    <span>2.8.0</span>
+                </div>
+                <div class="tech-item">
+                    <i class="fas fa-image"></i>
+                    <h4>Torchvision</h4>
+                    <span>0.23.0</span>
+                </div>
+                <div class="tech-item">
+                    <i class="fab fa-python"></i>
+                    <h4>Streamlit</h4>
+                    <span>1.50.0</span>
+                </div>
+                <div class="tech-item">
+                    <i class="fas fa-chart-area"></i>
+                    <h4>Matplotlib</h4>
+                    <span>3.9.4</span>
+                </div>
+                <div class="tech-item">
+                    <i class="fas fa-brain"></i>
+                    <h4>Scikit-learn</h4>
+                    <span>1.6.1</span>
+                </div>
+                <div class="tech-item">
+                    <i class="fas fa-calculator"></i>
+                    <h4>NumPy</h4>
+                    <span>2.0.2</span>
+                </div>
+                <div class="tech-item">
+                    <i class="fas fa-cogs"></i>
+                    <h4>ResNet18</h4>
+                    <span>ImageNet 预训练</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section class="section demo" id="demo">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-tag">在线演示</div>
+                <h2 class="section-title">实时检测体验</h2>
+                <p class="section-subtitle">上传工业零件图片，实时检测表面缺陷类型，体验智能检测的便捷与高效</p>
+            </div>
+            <div class="demo-card">
+                <h3>Web 演示界面</h3>
+                <p>基于 Streamlit 构建的交互式 Web 应用，提供直观友好的用户界面</p>
+                <div class="demo-features">
+                    <div class="demo-feature">
+                        <i class="fas fa-check-circle"></i>
+                        <span>支持 JPG、PNG、BMP 格式图片上传</span>
+                    </div>
+                    <div class="demo-feature">
+                        <i class="fas fa-check-circle"></i>
+                        <span>实时显示检测结果和置信度</span>
+                    </div>
+                    <div class="demo-feature">
+                        <i class="fas fa-check-circle"></i>
+                        <span>概率分布可视化展示</span>
+                    </div>
+                    <div class="demo-feature">
+                        <i class="fas fa-check-circle"></i>
+                        <span>中英文类别名称双语显示</span>
+                    </div>
+                </div>
+                <div class="demo-cta">
+                    <a href="https://github.com/poboll/resnet-defect-detection" class="btn btn-primary">
+                        <i class="fab fa-github"></i>
+                        查看源代码
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Documentation Section -->
+    <section class="section documentation" id="docs">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-tag">项目文档</div>
+                <h2 class="section-title">完整的技术文档</h2>
+                <p class="section-subtitle">详细的技术文档和使用指南，帮助您快速了解和使用本系统</p>
+            </div>
+            <div class="docs-grid">
+                <div class="doc-card">
+                    <div class="doc-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h3>课程论文</h3>
+                    <p>完整的课程设计论文，包含详细的设计思路、实现步骤和实验结果，适合学术参考</p>
+                    <a href="https://github.com/poboll/resnet-defect-detection/blob/main/plans/final_course_paper_v3.md"
+                        class="doc-link">
+                        查看论文 <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="doc-card">
+                    <div class="doc-icon">
+                        <i class="fas fa-file-powerpoint"></i>
+                    </div>
+                    <h3>PPT 大纲</h3>
+                    <p>29 页详细内容，包含演讲时间分配和设计建议，适合课程答辩和展示</p>
+                    <a href="https://github.com/poboll/resnet-defect-detection/blob/main/plans/ppt_outline.md"
+                        class="doc-link">
+                        查看大纲 <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="doc-card">
+                    <div class="doc-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <h3>打包指南</h3>
+                    <p>详细的本地和 GitHub Actions 打包说明，支持多平台应用打包</p>
+                    <a href="https://github.com/poboll/resnet-defect-detection/blob/main/PACKAGING_GUIDE.md"
+                        class="doc-link">
+                        查看指南 <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="doc-card">
+                    <div class="doc-icon">
+                        <i class="fab fa-github-alt"></i>
+                    </div>
+                    <h3>GitHub Actions</h3>
+                    <p>自动构建三端可执行文件的配置说明，实现 CI/CD 自动化</p>
+                    <a href="https://github.com/poboll/resnet-defect-detection/blob/main/GITHUB_ACTIONS_GUIDE.md"
+                        class="doc-link">
+                        查看指南 <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <h4><i class="fas fa-microscope"></i> DefectDetect</h4>
+                    <p>基于 ResNet18 的工业零件表面缺陷智能检测系统是《人工智能应用技术》期末课程作业，展示了深度学习在工业质检领域的应用价值。项目采用迁移学习策略，在小样本数据集上实现了工业级的高精度检测。
+                    </p>
+                </div>
+                <div class="footer-section">
+                    <h5>快速链接</h5>
+                    <ul class="footer-links">
+                        <li><a href="#features">核心特性</a></li>
+                        <li><a href="#defects">缺陷类型</a></li>
+                        <li><a href="#results">实验结果</a></li>
+                        <li><a href="#docs">项目文档</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h5>资源</h5>
+                    <ul class="footer-links">
+                        <li><a href="https://github.com/poboll/resnet-defect-detection">GitHub 仓库</a></li>
+                        <li><a href="https://github.com/poboll/resnet-defect-detection/issues">报告问题</a></li>
+                        <li><a href="https://github.com/poboll/resnet-defect-detection/blob/main/README.md">README</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h5>技术支持</h5>
+                    <ul class="footer-links">
+                        <li><a href="https://github.com/poboll/resnet-defect-detection/issues">提交 Issue</a></li>
+                        <li><a href="https://github.com/poboll/resnet-defect-detection/pulls">Pull Request</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="footer-copyright">
+                    &copy; 2025 工业零件表面缺陷分类系统. 基于 ResNet18 深度学习
+                </div>
+                <div class="social-links">
+                    <a href="https://github.com/poboll/resnet-defect-detection"><i class="fab fa-github"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scroll to Top Button -->
+    <button class="scroll-top" id="scrollTop">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script>
+        // Scroll to top button
+        const scrollTopBtn = document.getElementById('scrollTop');
+        const navbar = document.getElementById('navbar');
+
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 300) {
+                scrollTopBtn.classList.add('visible');
+            } else {
+                scrollTopBtn.classList.remove('visible');
+            }
+
+            if (window.pageYOffset > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        scrollTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    const offsetTop = targetElement.offsetTop - 80;
+                    window.scrollTo({
+                        top: offsetTop,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Intersection Observer for animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-fade-in');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        // Observe all cards
+        document.querySelectorAll('.feature-card, .defect-card, .stat-card, .doc-card, .tech-item').forEach(card => {
+            observer.observe(card);
+        });
+    </script>
+</body>
+
+</html>
